@@ -3,7 +3,7 @@ from distutils.core import setup
 
 setup(
     name="qfinance",
-    version="0.1.2",
+    version="0.1.3",
     description="A simple financial database management package",
     url="https://github.com/965311532/qfinance",
     author="Gabriele Armento",

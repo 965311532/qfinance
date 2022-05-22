@@ -106,7 +106,7 @@ def describe(
     return (
         df[over]
         .groupby(pd.Grouper(freq=granularity))
-        .__getattr__(mode)
+        .__getattr__(mode)()
         .describe(percentiles=percentiles)
     )
 
