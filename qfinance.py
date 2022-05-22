@@ -1,5 +1,4 @@
 import pandas as pd
-import os
 import re
 
 from pathlib import Path
@@ -72,6 +71,20 @@ def get_ticker(ticker: str, interval: str = "5Y") -> pd.DataFrame:
     return df
 
 
+def bos(df: pd.DataFrame):
+    """A break of structure is defined as a break in the short-term movement of price. In particular a bos happens when a new
+    high is higher (or a new low is lower) than the previous high (or previous low)."""
+    raise NotImplementedError
+    df_ = df.copy()
+    ref_high = df_.high[0]
+    ref_low = df_.low[0]
+    bos_arr = []
+    for row in df_.itertuples():
+        side = 1 if row.close > row.open else -1
+        if row.close - ref_high > 0 and side == 1:
+            pass
+
+
 def resample(df: pd.DataFrame, period: str, na="drop"):
     """Resamples the dataframe"""
     resamp = df.resample(period).agg(OHLC)
@@ -80,6 +93,22 @@ def resample(df: pd.DataFrame, period: str, na="drop"):
     elif na == "fill":
         resamp.fillna(method="ffill", inplace=True)
     return resamp
+
+
+def describe(
+    df: pd.DataFrame,
+    over="r",
+    granularity="30D",
+    mode="sum",
+    percentiles=[0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9],
+) -> pd.DataFrame:
+    """Describes the dataframe"""
+    return (
+        df[over]
+        .groupby(pd.Grouper(freq=granularity))
+        .__getattr__(mode)
+        .describe(percentiles=percentiles)
+    )
 
 
 def main():
