@@ -93,6 +93,48 @@ def describe(
     )
 
 
+def score(
+    df: pd.DataFrame,
+    over: str = "r",
+    tr_dir_col: str = "tr_dir",
+    params: dict | None = None,
+) -> dict:
+    """Determines the results of the backtest"""
+
+    # Monthly R & max DD
+    avg_r = df[over].groupby(pd.Grouper(freq="M")).sum().mean()
+    max_dd = -1 * drawdown(df=df, over=over).min()
+
+    # Weekly rolling winning %
+    week_resample = df[over].resample("1D").sum().rolling(7).sum().dropna()
+    week_winning_pct = len(week_resample >= 0) / len(week_resample)
+
+    # Long-short ratio
+    long_pct = len(df[df[tr_dir_col] == 1]) / len(df)
+
+    # Long r to short r ratio
+    long_r_ratio = (
+        df[df[tr_dir_col] == 1][over].mean() / df[df[tr_dir_col] == -1][over].mean()
+    )
+
+    # Results
+    res = {
+        "avg_r": avg_r,
+        "max_dd": max_dd,
+        "r_by_dd": avg_r / max_dd,
+        "week_winning_pct": week_winning_pct,
+        "long_pct": long_pct,
+        "long_r_ratio": long_r_ratio,
+        "wow": avg_r / max_dd * week_winning_pct,
+    }
+
+    if params is not None:
+        params.update(res)
+        res = params
+
+    return res
+
+
 def main():
     """Tests the module"""
     # Set the database path
