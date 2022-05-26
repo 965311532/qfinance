@@ -1,5 +1,7 @@
 import hashlib
 import pandas.util
+import itertools
+import sys
 
 from pandas import DataFrame
 from pathlib import Path
@@ -63,3 +65,33 @@ def get_tickers() -> list[str]:
     """Returns a list of all tickers in the database"""
     check_database_path()
     return [str(p.stem) for p in Path(DATABASE_PATH).glob("*.parquet")]
+
+
+def total_size(o, handlers={}):
+    """Returns the approximate memory footprint an object and all of its contents."""
+    dict_handler = lambda d: itertools.chain.from_iterable(d.items())
+    all_handlers = {
+        tuple: iter,
+        list: iter,
+        dict: dict_handler,
+        set: iter,
+        frozenset: iter,
+    }
+    
+    all_handlers.update(handlers)
+    seen = set()
+    default_size = sys.getsizeof(0)
+
+    def sizeof(o):
+        if id(o) in seen:  # do not double count the same object
+            return 0
+        seen.add(id(o))
+        s = sys.getsizeof(o, default_size)
+
+        for typ, handler in all_handlers.items():
+            if isinstance(o, typ):
+                s += sum(map(sizeof, handler(o)))
+                break
+        return s
+
+    return sizeof(o)
