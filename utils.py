@@ -57,3 +57,9 @@ def hash_params(params: dict) -> str:
             matrix += f"{k}=" + str(v) + "&"
 
     return hashlib.sha256(matrix.encode("utf-8")).hexdigest()
+
+
+def get_tickers() -> list[str]:
+    """Returns a list of all tickers in the database"""
+    check_database_path()
+    return [str(p.stem) for p in Path(DATABASE_PATH).glob("*.parquet")]
