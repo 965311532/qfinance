@@ -95,6 +95,11 @@ def resample(df: pd.DataFrame, period: str, na="drop") -> pd.DataFrame:
     return resamp
 
 
+def drawdown(df: pd.DataFrame, over: str = "r") -> pd.Series:
+    """Calculates the drawdown of the dataframe"""
+    return df[over].cumsum() - df[over].cumsum().cummax()
+
+
 def describe(
     df: pd.DataFrame,
     over="r",
