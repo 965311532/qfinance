@@ -42,9 +42,18 @@ def hash_df(df: DataFrame) -> str:
 
 def hash_params(params: dict) -> str:
     """Returns a hash of the parameters"""
-    return hashlib.sha256(str(params).encode("utf-8")).hexdigest()
+    # We need to check what type we are hashing,
+    # we currentyly support DataFrames, str, int, floats
+    matrix = ""
 
+    for k, v in params.items():
+        if isinstance(v, DataFrame):
+            matrix += f"{k}=" + hash_df(v) + "&"
+        elif isinstance(v, float):
+            matrix += f"{k}={round(v, 9)}" + "&"
+        elif not isinstance(v, (str, int)):
+            raise ValueError("Unsupported type: " + str(type(v)))
+        else:
+            matrix += f"{k}=" + str(v) + "&"
 
-def hash_str(str_: str) -> str:
-    """Returns a hash of the string"""
-    return hashlib.sha256(str_.encode("utf-8")).hexdigest()
+    return hashlib.sha256(matrix.encode("utf-8")).hexdigest()
