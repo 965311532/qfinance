@@ -1,3 +1,7 @@
+import hashlib
+import pandas.util
+
+from pandas import DataFrame
 from pathlib import Path
 
 OHLC = {"open": "first", "high": "max", "low": "min", "close": "last"}
@@ -27,3 +31,20 @@ def check_that_ticker_exists(ticker: str):
     check_database_path()
     if not Path(DATABASE_PATH, ticker + ".parquet").exists():
         raise ValueError("Ticker not in database: " + ticker)
+
+
+def hash_df(df: DataFrame) -> str:
+    """Returns a hash of the dataframe"""
+    return hashlib.sha256(
+        pandas.util.hash_pandas_object(df, index=True).values
+    ).hexdigest()
+
+
+def hash_params(params: dict) -> str:
+    """Returns a hash of the parameters"""
+    return hashlib.sha256(str(params).encode("utf-8")).hexdigest()
+
+
+def hash_str(str_: str) -> str:
+    """Returns a hash of the string"""
+    return hashlib.sha256(str_.encode("utf-8")).hexdigest()
