@@ -9,6 +9,7 @@ import utils
 set_database_path = set_db_path = utils.set_database_path
 
 
+@utils.cached
 def get_ticker(ticker: str, interval: str = "5Y") -> pd.DataFrame:
     """Returns the ticker dataframe"""
     # Performs the check for the database path and throws an error if it is not set
@@ -58,6 +59,7 @@ def bos(df: pd.DataFrame):
             pass
 
 
+@utils.cached
 def resample(
     df: pd.DataFrame, period: str, na="drop", offset: str | None = None
 ) -> pd.DataFrame:
@@ -96,8 +98,10 @@ def main():
     # Set the database path
     # set_database_path("/home/jose/qfinance/database") # should raise ValueError
     set_database_path("C:\\FXDB")
-    df = get_ticker("EURUSD")
-    print(df)
+
+    for ticker in utils.get_tickers():
+        for _ in range(1000):
+            get_ticker(ticker)
 
 
 if __name__ == "__main__":

@@ -9,6 +9,70 @@ from pathlib import Path
 OHLC = {"open": "first", "high": "max", "low": "min", "close": "last"}
 
 
+class SimpleCache:
+    """Simple cache class with limited capacity"""
+
+    __slots__ = ["capacity", "cache"]
+
+    def __init__(self, capacity: int):
+        self.capacity = capacity  # in bytes
+        self.cache = {}
+        print("SimpleCache initialized")
+
+    def __contains__(self, key: str) -> bool:
+        """Returns True if the key is in the cache"""
+        return key in self.cache
+
+    def set_capacity(self, capacity: int) -> None:
+        """Sets the cache capacity"""
+        self.capacity = capacity
+        self.manage_storage()
+
+    def manage_storage(self):
+        """Check if the cache is full and if so, delete the oldest item"""
+        if total_size(self.cache) > self.capacity and len(self.cache) > 0:
+            print("Cache full, deleting oldest item")
+            self.cache.pop(next(iter(self.cache)))
+
+    def get(self, key: str) -> object:
+        """Returns the cached object"""
+        return self.cache[key]
+
+    def set(self, key: str, value: object) -> None:
+        """Sets the cached object"""
+        self.cache[key] = value
+        print("Cached object set", total_size(self.cache))
+        self.manage_storage()
+
+
+# Istantiate the cache
+CACHE = SimpleCache(capacity=100_000_000)  # 100 MB
+
+
+def set_cache_capacity(capacity: int):
+    """Sets the cache capacity"""
+    CACHE.set_capacity(capacity)
+
+
+def cached(func):
+    """Decorator to cache the results of a function"""
+
+    def wrapper(*args, **kwargs):
+        # Get the hash of the parameters
+        params_hash = hash_params(
+            {**{f"arg{i}": arg for i, arg in enumerate(args)}, **kwargs}
+        )
+        # Check if the hash is in the cache
+        if params_hash in CACHE:
+            return CACHE.get(params_hash)
+        # If not, call the function and cache the result
+        result = func(*args, **kwargs)
+        CACHE.set(params_hash, result)
+        return result
+
+    return wrapper
+
+
 def set_database_path(path):
     """Sets the path to the database"""
     global DATABASE_PATH
@@ -53,8 +117,8 @@ def hash_params(params: dict) -> str:
             matrix += f"{k}=" + hash_df(v) + "&"
         elif isinstance(v, float):
             matrix += f"{k}={round(v, 9)}" + "&"
-        elif not isinstance(v, (str, int)):
-            raise ValueError("Unsupported type: " + str(type(v)))
+        elif not isinstance(v, (str, int, type(None))):
+            raise ValueError("Unsupported type: " + str(type(v)) + " for " + str(v))
         else:
             matrix += f"{k}=" + str(v) + "&"
 
@@ -77,7 +141,7 @@ def total_size(o, handlers={}):
         set: iter,
         frozenset: iter,
     }
-    
+
     all_handlers.update(handlers)
     seen = set()
     default_size = sys.getsizeof(0)
