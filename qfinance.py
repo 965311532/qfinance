@@ -3,47 +3,20 @@ import re
 
 from pathlib import Path
 
-OHLC = {"open": "first", "high": "max", "low": "min", "close": "last"}
+import utils
 
-
-def set_database_path(path):
-    """Sets the path to the database"""
-    global DATABASE_PATH
-    DATABASE_PATH = Path(path)
-    check_database_path()
-
-
-# Alias for set_database_path
-set_db_path = set_database_path
-
-
-def check_database_path():
-    """Checks if the database path is set"""
-    if not "DATABASE_PATH" in globals():
-        raise ValueError("Database path not set, set it with set_database_path(path)")
-    # Check if the path exists
-    if not DATABASE_PATH.exists():
-        raise ValueError("Database path does not exist: " + str(DATABASE_PATH))
-    if not DATABASE_PATH.is_dir():
-        raise ValueError("Database path is not a directory: " + str(DATABASE_PATH))
-
-
-def check_that_ticker_exists(ticker: str):
-    """Checks if the ticker exists"""
-    # Check that path is set
-    check_database_path()
-    if not Path(DATABASE_PATH, ticker + ".parquet").exists():
-        raise ValueError("Ticker not in database: " + ticker)
+# Allow access from main module
+set_database_path = set_db_path = utils.set_database_path
 
 
 def get_ticker(ticker: str, interval: str = "5Y") -> pd.DataFrame:
     """Returns the ticker dataframe"""
     # Performs the check for the database path and throws an error if it is not set
-    check_database_path()
+    utils.check_database_path()
     # Check if the ticker exists
-    check_that_ticker_exists(ticker)
+    utils.check_that_ticker_exists(ticker)
 
-    filepath = Path(DATABASE_PATH, ticker + ".parquet")
+    filepath = Path(utils.DATABASE_PATH, ticker + ".parquet")
 
     df: pd.DataFrame = pd.read_parquet(str(filepath.absolute()))
     df.index = pd.to_datetime(df.index, unit="s")
@@ -89,7 +62,7 @@ def resample(
     df: pd.DataFrame, period: str, na="drop", offset: str | None = None
 ) -> pd.DataFrame:
     """Resamples the dataframe"""
-    resamp = df.resample(period, offset=offset).agg(OHLC)
+    resamp = df.resample(period, offset=offset).agg(utils.OHLC)
     if na == "drop":
         resamp.dropna(inplace=True)
     elif na == "fill":
@@ -124,6 +97,7 @@ def main():
     # set_database_path("/home/jose/qfinance/database") # should raise ValueError
     set_database_path("C:\\FXDB")
     df = get_ticker("EURUSD")
+    print(df)
 
 
 if __name__ == "__main__":
