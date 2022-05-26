@@ -17,7 +17,6 @@ class SimpleCache:
     def __init__(self, capacity: int):
         self.capacity = capacity  # in bytes
         self.cache = {}
-        print("SimpleCache initialized")
 
     def __contains__(self, key: str) -> bool:
         """Returns True if the key is in the cache"""
@@ -31,7 +30,6 @@ class SimpleCache:
     def manage_storage(self):
         """Check if the cache is full and if so, delete the oldest item"""
         if total_size(self.cache) > self.capacity and len(self.cache) > 0:
-            print("Cache full, deleting oldest item")
             self.cache.pop(next(iter(self.cache)))
 
     def get(self, key: str) -> object:
@@ -41,7 +39,6 @@ class SimpleCache:
     def set(self, key: str, value: object) -> None:
         """Sets the cached object"""
         self.cache[key] = value
-        print("Cached object set", total_size(self.cache))
         self.manage_storage()
 
 
