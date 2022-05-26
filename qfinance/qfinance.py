@@ -3,7 +3,7 @@ import re
 
 from pathlib import Path
 
-import utils
+from . import utils
 
 # Allow access from main module
 set_database_path = set_db_path = utils.set_database_path

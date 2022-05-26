@@ -1,16 +1,15 @@
 # Simple setup file for qfinance
-from setuptools import setup, find_packages
+from setuptools import setup
 
 setup(
     name="qfinance",
-    version="0.2.5",
+    version="0.3.0",
     description="A simple financial database management package",
     url="https://github.com/965311532/qfinance",
     author="Gabriele Armento",
     author_email="gabriele.armento@gmail.com",
     license="MIT",
-    packages=find_packages(where="src"),
-    package_dir={"": "src"},
+    py_modules=["qfinance"],
     install_requires=[
         "pandas",
         "fastparquet",
