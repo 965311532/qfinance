@@ -85,7 +85,7 @@ def bos(df: pd.DataFrame):
             pass
 
 
-def resample(df: pd.DataFrame, period: str, na="drop"):
+def resample(df: pd.DataFrame, period: str, na="drop") -> pd.DataFrame:
     """Resamples the dataframe"""
     resamp = df.resample(period).agg(OHLC)
     if na == "drop":
