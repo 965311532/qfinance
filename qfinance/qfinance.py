@@ -3,6 +3,9 @@ import re
 
 from pathlib import Path
 
+import matplotlib.pyplot as plt
+import seaborn as sns
+
 from . import utils
 
 # Allow access from main module
@@ -143,6 +146,34 @@ def approximate_commissions(sl_pips: float | int) -> float:
         -0.05435693
         + (6669274 - 0.05435693) / (1 + (sl_pips / 0.0000119139) ** 0.9993275)
     ) / 100
+
+
+def plot_results(df: pd.DataFrame, over: str = "r", figsize=(20, 10)) -> None:
+    """Plots the results of the backtest"""
+    sns.set_theme(style="whitegrid", palette="pastel")
+
+    axes: "array of AxesSubplot" = None  # type: ignore
+    fig, axes = plt.subplots(nrows=2, ncols=2, figsize=figsize)
+    fig.suptitle(f"Analysis of results")
+
+    df[over].cumsum().plot(ax=axes[0, 0], title="Cumulative Return", color="green")
+    drawdown(df).plot(ax=axes[1, 0], title="Drawdown", color="red")
+
+    monthly = df.groupby(pd.Grouper(freq="M")).sum()
+    monthly["month"] = monthly.index.strftime(r"%b %y")
+    sns.barplot(data=monthly, x="month", y="r", ax=axes[0, 1], color="blue")
+    axes[0, 1].set_title("Monthly Return")
+    axes[0, 1].set_xticks(axes[0, 1].get_xticks()[::2])
+    axes[0, 1].tick_params(axis="x", rotation=90)
+
+    sns.histplot(
+        ax=axes[1, 1], data=df[over].rolling("30D").sum(), kde=True, color="purple"
+    )
+    axes[1, 1].set_title("Rolling 30D Return Distribution")
+    axes[1, 1].axvline(0)
+
+    fig.tight_layout()
+    return plt.show()
 
 
 def main():
