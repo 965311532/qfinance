@@ -148,16 +148,22 @@ def approximate_commissions(sl_pips: float | int) -> float:
     ) / 100
 
 
-def plot_results(df: pd.DataFrame, over: str = "r", figsize=(20, 10)) -> None:
+def plot_results(df: pd.DataFrame, over: str = "r", figsize=(20, 10), adjust_max_dd=10) -> None:
     """Plots the results of the backtest"""
     sns.set_theme(style="whitegrid", palette="pastel")
 
     axes: "array of AxesSubplot" = None  # type: ignore
     fig, axes = plt.subplots(nrows=2, ncols=2, figsize=figsize)
-    fig.suptitle(f"Analysis of results")
+    fig.suptitle(f"Analysis of results (adjusted for max_dd={adjust_max_dd}r)")
+
+    # Adjust max dd value
+    df[over] = df[over] * adjust_max_dd / (-1 * drawdown(df=df, over=over).min())
 
     df[over].cumsum().plot(ax=axes[0, 0], title="Cumulative Return", color="green")
+    axes[0, 0].set_ylabel("r")
+
     drawdown(df).plot(ax=axes[1, 0], title="Drawdown", color="red")
+    axes[1, 0].set_ylabel("r")
 
     monthly = df.groupby(pd.Grouper(freq="M")).sum()
     monthly["month"] = monthly.index.strftime(r"%b %y")
