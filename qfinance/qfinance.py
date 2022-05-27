@@ -108,6 +108,9 @@ def score(
     avg_r = df[over].groupby(pd.Grouper(freq="M")).sum().mean()
     max_dd = -1 * drawdown(df=df, over=over).min()
 
+    # Winrate
+    winrate = df[df[over] >= 0].shape[0] / df.shape[0]
+
     # Weekly rolling winning %
     week_resample = df[over].resample("1D").sum().rolling(7).sum().dropna()
     week_winning_pct = (week_resample >= 0).sum() / len(week_resample)
@@ -125,6 +128,7 @@ def score(
         "avg_r": avg_r,
         "max_dd": max_dd,
         "r_by_dd": avg_r / max_dd,
+        "wr": winrate,
         "week_winning_pct": week_winning_pct,
         "long_pct": long_pct,
         "long_r_ratio": long_r_ratio,
@@ -148,22 +152,37 @@ def approximate_commissions(sl_pips: float | int) -> float:
     ) / 100
 
 
-def plot_results(df: pd.DataFrame, over: str = "r", figsize=(20, 10), adjust_max_dd=10) -> None:
+def plot_results(
+    df: pd.DataFrame, over: str = "r", figsize=(20, 10), adjust_max_dd=10
+) -> None:
     """Plots the results of the backtest"""
-    sns.set_theme(style="whitegrid", palette="pastel")
+    # Get score
+    score_ = score(df=df, over=over)
+
+    # Plot
+    sns.set_theme(style="whitegrid", palette="muted")
 
     axes: "array of AxesSubplot" = None  # type: ignore
-    fig, axes = plt.subplots(nrows=2, ncols=2, figsize=figsize)
-    fig.suptitle(f"Analysis of results (adjusted for max_dd={adjust_max_dd}r)")
+    fig, axes = plt.subplots(nrows=2, ncols=2, figsize=figsize, dpi=300)
+    fig.suptitle(
+        f"Analysis of results (adjusted for max_dd={adjust_max_dd}r)\n"
+        + f"r_by_dd={score_['r_by_dd']:.2f} | "
+        + f"wr={score_['wr']:.2%} | "
+        + f"week_winning={score_['week_winning_pct']:.2%} | "
+        + f"long_pct={score_['long_pct']:.2%} | "
+        + f"long_r_ratio={score_['long_r_ratio']:.2f}"
+    )
 
     # Adjust max dd value
     df[over] = df[over] * adjust_max_dd / (-1 * drawdown(df=df, over=over).min())
 
     df[over].cumsum().plot(ax=axes[0, 0], title="Cumulative Return", color="green")
     axes[0, 0].set_ylabel("r")
+    axes[0, 0].axhline(0)
 
     drawdown(df).plot(ax=axes[1, 0], title="Drawdown", color="red")
     axes[1, 0].set_ylabel("r")
+    axes[1, 0].axhline(-1 * adjust_max_dd)
 
     monthly = df.groupby(pd.Grouper(freq="M")).sum()
     monthly["month"] = monthly.index.strftime(r"%b %y")
@@ -171,6 +190,7 @@ def plot_results(df: pd.DataFrame, over: str = "r", figsize=(20, 10), adjust_max
     axes[0, 1].set_title("Monthly Return")
     axes[0, 1].set_xticks(axes[0, 1].get_xticks()[::2])
     axes[0, 1].tick_params(axis="x", rotation=90)
+    axes[0, 1].axhline(0)
 
     sns.histplot(
         ax=axes[1, 1], data=df[over].rolling("30D").sum(), kde=True, color="purple"
