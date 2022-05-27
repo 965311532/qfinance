@@ -135,15 +135,30 @@ def score(
     return res
 
 
+def approximate_commissions(sl_pips: float | int) -> float:
+    """Approximate the commissions for the given stop loss pips.
+    Returns the commission amount as the % of the risk amount."""
+    # Crazy poly gotten through manual testing.
+    return (
+        -0.05435693
+        + (6669274 - 0.05435693) / (1 + (sl_pips / 0.0000119139) ** 0.9993275)
+    ) / 100
+
+
 def main():
     """Tests the module"""
     # Set the database path
     # set_database_path("/home/jose/qfinance/database") # should raise ValueError
     set_database_path("C:\\FXDB")
 
-    for ticker in utils.get_tickers():
-        for _ in range(1000):
-            get_ticker(ticker)
+    # for ticker in utils.get_tickers():
+    #     for _ in range(1000):
+    #         get_ticker(ticker)
+
+    print(approximate_commissions(sl_pips=1))
+    print(approximate_commissions(sl_pips=10))
+    print(approximate_commissions(sl_pips=100))
+    print(approximate_commissions(sl_pips=0))
 
 
 if __name__ == "__main__":
