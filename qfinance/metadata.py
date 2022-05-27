@@ -8,9 +8,9 @@ PIP_VALUE = {
     "GBPJPY": 0.01,
     "USDJPY": 0.01,
     "XAUUSD": 0.1,
+    "US500": 0.1,
     "US100": 1,
     "US30": 1,
-    "US500": 1,
 }
 
 SPREAD_PIPS = {

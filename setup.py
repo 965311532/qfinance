@@ -3,7 +3,7 @@ from setuptools import setup
 
 setup(
     name="qfinance",
-    version="0.3.0",
+    version="0.3.1",
     description="A simple financial database management package",
     url="https://github.com/965311532/qfinance",
     author="Gabriele Armento",
