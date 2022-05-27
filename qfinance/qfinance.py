@@ -107,7 +107,7 @@ def score(
 
     # Weekly rolling winning %
     week_resample = df[over].resample("1D").sum().rolling(7).sum().dropna()
-    week_winning_pct = len(week_resample >= 0) / len(week_resample)
+    week_winning_pct = (week_resample >= 0).sum() / len(week_resample)
 
     # Long-short ratio
     long_pct = len(df[df[tr_dir_col] == 1]) / len(df)
