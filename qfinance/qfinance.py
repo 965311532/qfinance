@@ -151,7 +151,7 @@ def approximate_commissions(sl_pips: float | int) -> float:
     ) / 100
 
 
-def approximate_spread(timestamps: pd.Index, std_dev: float = 0.1) -> pd.Series:
+def approximate_spread(timestamps: pd.Index, std_dev: float = 0.05) -> pd.Series:
     """Approximate the spread given the timestamps. Returns a series of the spread."""
     map_ = pd.DataFrame(index=range(1440), columns=["spread"], dtype=np.float32)
     map_.iloc[(0, 1439), -1] = 25  # Midnight is the highest spread
