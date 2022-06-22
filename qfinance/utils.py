@@ -1,8 +1,9 @@
 import hashlib
-import pandas.util
 import itertools
 import sys
+from copy import deepcopy
 
+import pandas.util
 from pandas import DataFrame
 from pathlib import Path
 
@@ -21,6 +22,10 @@ class SimpleCache:
     def __contains__(self, key: str) -> bool:
         """Returns True if the key is in the cache"""
         return key in self.cache
+
+    def __repr__(self):
+        """Representation of the object"""
+        return f"<{__class__.__name__} capacity={self.capacity} available={self.capacity - total_size(self.cache)}"
 
     def set_capacity(self, capacity: int) -> None:
         """Sets the cache capacity"""
@@ -56,15 +61,14 @@ def cached(func):
 
     def wrapper(*args, **kwargs):
         # Get the hash of the parameters
-        params_hash = hash_params(
-            {**{f"arg{i}": arg for i, arg in enumerate(args)}, **kwargs}
-        )
+        params = {**{f"arg{i}": arg for i, arg in enumerate(args)}, **kwargs}
+        params_hash = hash_params(params)
         # Check if the hash is in the cache
         if params_hash in CACHE:
-            return CACHE.get(params_hash)
+            return deepcopy(CACHE.get(params_hash))
         # If not, call the function and cache the result
         result = func(*args, **kwargs)
-        CACHE.set(params_hash, result)
+        CACHE.set(params_hash, deepcopy(result))
         return result
 
     return wrapper
@@ -96,30 +100,30 @@ def check_that_ticker_exists(ticker: str):
         raise ValueError("Ticker not in database: " + ticker)
 
 
-def hash_df(df: DataFrame) -> str:
-    """Returns a hash of the dataframe"""
-    return hashlib.sha256(
-        pandas.util.hash_pandas_object(df, index=True).values
-    ).hexdigest()
+# def hash_df(df: DataFrame) -> str:
+#     """Returns a hash of the dataframe. (Note: very expensive)"""
+#     return hashlib.sha256(
+#         pandas.util.hash_pandas_object(df, index=True).values
+#     ).hexdigest()
 
 
 def hash_params(params: dict) -> str:
     """Returns a hash of the parameters"""
     # We need to check what type we are hashing,
-    # we currentyly support DataFrames, str, int, floats
-    matrix = ""
+    # we currently support str, int, floats, None
+    digest = ""
 
     for k, v in params.items():
-        if isinstance(v, DataFrame):
-            matrix += f"{k}=" + hash_df(v) + "&"
-        elif isinstance(v, float):
-            matrix += f"{k}={round(v, 9)}" + "&"
+        if isinstance(v, float):
+            digest += f"{k}={round(v, 9)}" + "&"
+        elif callable(v):
+            digest += f"{k}={v.__name__}{v.__hash__}" + "&"
         elif not isinstance(v, (str, int, type(None))):
             raise ValueError("Unsupported type: " + str(type(v)) + " for " + str(v))
         else:
-            matrix += f"{k}=" + str(v) + "&"
+            digest += f"{k}=" + str(v) + "&"
 
-    return hashlib.sha256(matrix.encode("utf-8")).hexdigest()
+    return hashlib.sha256(digest.encode("utf-8")).hexdigest()
 
 
 def get_tickers() -> list[str]:
